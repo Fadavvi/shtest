@@ -11,4 +11,4 @@
             # Flow is redirected like this: STDIN -> SOCKET -> STDOUT
     Compiling:
         gcc -Wall shtest.c -o shtest
-    Author: hellman (hellman1908@gmail.com)
+    Updated by: Milad Fadavvi / Original Author: hellman (hellman1908@gmail.com)
