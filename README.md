@@ -1,6 +1,12 @@
-    Shellcode testing program
-    Usage:
-        shtest {-f file | $'\xeb\xfe' | '\xb8\x39\x05\x00\x00\xc3'}
+# Shellcode testing program
+
+## Compiling
+`gcc -Wall shtest.c -o shtest`
+
+## Usage
+```
+shtest {-f file | $'\xeb\xfe' | '\xb8\x39\x05\x00\x00\xc3'}
+
     Usage example:
         $ shtest $'\xeb\xfe'                 # raw shellcode
         $ shtest '\xb8\x39\x05\x00\x00\xc3'  # escaped shellcode
@@ -9,6 +15,12 @@
         $ shtest -s 5 -f test.sc             # create socket at fd=5
             # Allows to test staged shellcodes
             # Flow is redirected like this: STDIN -> SOCKET -> STDOUT
-    Compiling:
-        gcc -Wall shtest.c -o shtest
-    Updated by: Milad Fadavvi / Original Author: hellman (hellman1908@gmail.com)
+```
+
+## Cred
+
+Updated by: Milad Fadavvi / Original Author: hellman (hellman1908@gmail.com)
+
+## Screemshot
+
+![shtest](./ss.png)
