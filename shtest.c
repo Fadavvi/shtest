@@ -1,122 +1,33 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/types.h> /* See NOTES */
-#include <sys/wait.h>
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <string.h> 
+#include <signal.h> 
+#include <ctype.h> 
+#include <unistd.h> 
+#include <fcntl.h> 
+#include <sys/mman.h> 
+#include <sys/types.h> /* See NOTES */ 
+#include <sys/wait.h> 
 #include <sys/socket.h>
-
-/*------------------------------------------
-    Shellcode testing program
-    Usage:
-        shtest [-s socked_fd_no] {-f file | $'\xeb\xfe' | '\xb8\x39\x05\x00\x00\xc3'}
-    Usage example:
-        $ shtest $'\xeb\xfe'                 # raw shellcode
-        $ shtest '\xb8\x39\x05\x00\x00\xc3'  # escaped shellcode
-        $ shtest -f test.sc                  # shellcode from file
-        $ shtest -f <(python gen_payload.py) # test generated payload
-        $ shtest -s 5 -f test.sc             # create socket at fd=5
-            # Allows to test staged shellcodes
-            # Flow is redirected like this: STDIN -> SOCKET -> STDOUT
-    Compiling:
-        gcc -Wall shtest.c -o shtest
-    Author: hellman (hellman1908@gmail.com)
--------------------------------------------*/
-
+/************************************************************** */
+/**/
+/************************************************************* */
 char buf[4096];
-int pid1, pid2;
-int sock;
-int ready;
-
-void usage(char * err);
-int main(int argc, char **argv);
-
-void load_from_file(char *fname);
-void copy_from_argument(char *arg);
-void escape_error();
-
-int create_sock();
-void run_reader(int);
-void run_writer(int);
+int pid1, pid2; 
+int sock; 
+int ready; 
+void usage(char * err); 
+int main(int argc, char **argv); 
+void load_from_file(char *fname); 
+void copy_from_argument(char *arg); 
+void escape_error(); 
+int create_sock(); 
+void run_reader(int); 
+void run_writer(int); 
 void set_ready(int sig);
-
-void run_shellcode(void *sc_ptr);
-
-
-void usage(char * err) {
-    printf("    Shellcode testing program\n\
-    Usage:\n\
-        shtest {-f file | $'\\xeb\\xfe' | '\\xb8\\x39\\x05\\x00\\x00\\xc3'}\n\
-    Usage example:\n\
-        $ shtest $'\\xeb\\xfe'                 # raw shellcode\n\
-        $ shtest '\\xb8\\x39\\x05\\x00\\x00\\xc3'  # escaped shellcode\n\
-        $ shtest -f test.sc                  # shellcode from file\n\
-        $ shtest -f <(python gen_payload.py) # test generated payload\n\
-        $ shtest -s 5 -f test.sc             # create socket at fd=5 (STDIN <- SOCKET -> STDOUT)\n\
-            # Allows to test staged shellcodes\
-            # Flow is redirected like this: STDIN -> SOCKET -> STDOUT\
-    Compiling:\n\
-        gcc -Wall shtest.c -o shtest\n\
-    Author: hellman (hellman1908@gmail.com)\n");
-    if (err) printf("\nerr: %s\n", err);
-    exit(1);
-}
-
-int main(int argc, char **argv) {
-    char * fname = NULL;
-    int c;
-
-    pid1 = pid2 = -1;
-    sock = -1;
-
-    while ((c = getopt(argc, argv, "hus:f:")) != -1) {
-        switch (c) {
-            case 'f':
-                fname = optarg;
-                break;
-            case 's':
-                sock = atoi(optarg);
-                if (sock <= 2 || sock > 1024)
-                    usage("bad descriptor number for sock");
-                break;
-            case 'h':
-            case 'u':
-                usage(NULL);
-            default:
-                usage("unknown argument");
-        }
-    }
-
-    if (argc == 1)
-        usage(NULL);
-
-    if (optind < argc && fname)
-        usage("can't load shellcode both from argument and file");
-    
-    if (!(optind < argc) && !fname)
-        usage("please provide shellcode via either argument or file");
-
-    if (optind < argc) {
-        copy_from_argument(argv[optind]);
-    }
-    else {
-        load_from_file(fname);
-    }
-
-    //create socket if needed
-    if (sock != -1) {
-        int created_sock = create_sock(sock);
-        printf("Created socket %d\n", created_sock);
-    }
-
-    run_shellcode(buf);
-    return 100;
-}
-
+/************************************************************** */
+/**/
+/************************************************************* */
 void load_from_file(char *fname) {
     FILE * fd = fopen(fname, "r");
     if (!fd) {
@@ -128,7 +39,9 @@ void load_from_file(char *fname) {
     printf("Read %d bytes from '%s'\n", c, fname);
     fclose(fd);
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
 void copy_from_argument(char *arg) {
     //try to translate from escapes ( \xc3 )
 
@@ -151,12 +64,16 @@ void copy_from_argument(char *arg) {
         p2 += 1;
     }
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
 void escape_error() {
     printf("Shellcode is incorrectly escaped!\n");
     exit(1);
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
 int create_sock() {
     int fds[2];
     int sock2;
@@ -209,7 +126,9 @@ int create_sock() {
     close(sock2);
     return sock;
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
 void run_reader(int fd) {
     char buf[4096];
     int n;
@@ -230,7 +149,9 @@ void run_reader(int fd) {
         }
     }
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
 void run_writer(int fd) {
     char buf[4096];
     int n;
@@ -253,33 +174,66 @@ void run_writer(int fd) {
         }
     }
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
 void set_ready(int sig) {
     ready = 1;
 }
-
+/************************************************************** */
+/**/
+/************************************************************* */
+void usage(char * err) {
+    printf("    Shellcode testing program\n\
+    Usage:\n\
+        shtest {-f file | $'\\xeb\\xfe' | '\\xb8\\x39\\x05\\x00\\x00\\xc3'}\n\
+    Usage example:\n\
+        $ shtest $'\\xeb\\xfe'                 # raw shellcode\n\
+        $ shtest '\\xb8\\x39\\x05\\x00\\x00\\xc3'  # escaped shellcode\n\
+        $ shtest -f test.sc                  # shellcode from file\n\
+        $ shtest -f <(python gen_payload.py) # test generated payload\n\
+        $ shtest -s 5 -f test.sc             # create socket at fd=5 (STDIN <- SOCKET -> STDOUT)\n\
+            # Allows to test staged shellcodes\
+            # Flow is redirected like this: STDIN -> SOCKET -> STDOUT\
+    Compiling:\n\
+        gcc -Wall shtest.c -o shtest\n\
+    Updated by: Milad Fadavvi / Original Author: hellman (hellman1908@gmail.com)\n");
+    if (err) printf("\nerr: %s\n", err);
+    exit(1);
+}
+/************************************************************** */
+/**/
+/************************************************************* */
 void run_shellcode(void *sc_ptr) {
     int ret = 0, status = 0;
     int (*ptr)();
     
     ptr = sc_ptr;
-    mprotect((void *) ((unsigned int)ptr & 0xfffff000), 4096 * 2, 7);
-    
-    void *esp, *ebp;
-    void *edi, *esi;
+    mprotect((void *) ((unsigned long)ptr & ~0xfff), 4096 * 2, PROT_READ | PROT_WRITE | PROT_EXEC);
 
-    asm ("movl %%esp, %0;"
-         "movl %%ebp, %1;"
-         :"=r"(esp), "=r"(ebp));
-    
-    asm ("movl %%esi, %0;"
-         "movl %%edi, %1;"
-         :"=r"(esi), "=r"(edi)); 
+    void *esp = NULL, *ebp = NULL;
+    void *esi = NULL, *edi = NULL;
+
+#if defined(__i386__)
+    // 32-bit: capture registers
+    asm volatile ("" : "=r"(esp));
+    asm volatile ("" : "=r"(ebp));
+    asm volatile ("" : "=r"(esi));
+    asm volatile ("" : "=r"(edi));
+#elif defined(__x86_64__)
+    // 64-bit: use rsp/rbp/rsi/rdi instead
+    asm volatile ("" : "=r"(esp));
+    asm volatile ("" : "=r"(ebp));
+    asm volatile ("" : "=r"(esi));
+    asm volatile ("" : "=r"(edi));
+#else
+#   error "Unsupported architecture: only x86 / x86_64 supported"
+#endif
     
     printf("Shellcode at %p\n", ptr);
     printf("Registers before call:\n");
-    printf("  esp: %p, ebp: %p\n", esp, ebp);
-    printf("  esi: %p, edi: %p\n", esi, edi);
+    printf("  esp/rsp: %p, ebp/rbp: %p\n", esp, ebp);
+    printf("  esi/rsi: %p, edi/rdi: %p\n", esi, edi);
 
     printf("----------------------\n");
     if (pid1 > 0) kill(pid1, SIGUSR1);
@@ -293,7 +247,59 @@ void run_shellcode(void *sc_ptr) {
     wait(&status);
 
     printf("----------------------\n");
-    
     printf("Shellcode returned %d\n", ret);
     exit(0);
+}
+/************************************************************** */
+/**/
+/************************************************************* */
+int main(int argc, char **argv) {
+    char * fname = NULL;
+    int c;
+
+    pid1 = pid2 = -1;
+    sock = -1;
+
+    while ((c = getopt(argc, argv, "hus:f:")) != -1) {
+        switch (c) {
+            case 'f':
+                fname = optarg;
+                break;
+            case 's':
+                sock = atoi(optarg);
+                if (sock <= 2 || sock > 1024)
+                    usage("bad descriptor number for sock");
+                break;
+            case 'h':
+            case 'u':
+                usage(NULL);
+            default:
+                usage("unknown argument");
+        }
+    }
+
+    if (argc == 1)
+        usage(NULL);
+
+    if (optind < argc && fname)
+        usage("can't load shellcode both from argument and file");
+    
+    if (!(optind < argc) && !fname)
+        usage("please provide shellcode via either argument or file");
+
+    if (optind < argc) {
+        copy_from_argument(argv[optind]);
+    }
+    else {
+        load_from_file(fname);
+    }
+
+    //create socket if needed
+    if (sock != -1) {
+        int created_sock = create_sock(sock);
+        printf("Created socket %d\n", created_sock);
+    }
+
+    run_shellcode(buf);
+    return 100;
 }
