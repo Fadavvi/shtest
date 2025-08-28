@@ -194,9 +194,7 @@ void usage(char * err) {
         $ shtest -f <(python gen_payload.py) # test generated payload\n\
         $ shtest -s 5 -f test.sc             # create socket at fd=5 (STDIN <- SOCKET -> STDOUT)\n\
             # Allows to test staged shellcodes\
-            # Flow is redirected like this: STDIN -> SOCKET -> STDOUT\
-    Compiling:\n\
-        gcc -Wall shtest.c -o shtest\n\
+            # Flow is redirected like this: STDIN -> SOCKET -> STDOUT\n\
     Updated by: Milad Fadavvi / Original Author: hellman (hellman1908@gmail.com)\n");
     if (err) printf("\nerr: %s\n", err);
     exit(1);
@@ -215,17 +213,15 @@ void run_shellcode(void *sc_ptr) {
     void *esi = NULL, *edi = NULL;
 
 #if defined(__i386__)
-    // 32-bit: capture registers
-    asm volatile ("" : "=r"(esp));
-    asm volatile ("" : "=r"(ebp));
-    asm volatile ("" : "=r"(esi));
-    asm volatile ("" : "=r"(edi));
+    asm volatile ("movl %%esp, %0" : "=r"(esp));
+    asm volatile ("movl %%ebp, %0" : "=r"(ebp));
+    asm volatile ("movl %%esi, %0" : "=r"(esi));
+    asm volatile ("movl %%edi, %0" : "=r"(edi));
 #elif defined(__x86_64__)
-    // 64-bit: use rsp/rbp/rsi/rdi instead
-    asm volatile ("" : "=r"(esp));
-    asm volatile ("" : "=r"(ebp));
-    asm volatile ("" : "=r"(esi));
-    asm volatile ("" : "=r"(edi));
+    asm volatile ("movq %%rsp, %0" : "=r"(esp));
+    asm volatile ("movq %%rbp, %0" : "=r"(ebp));
+    asm volatile ("movq %%rsi, %0" : "=r"(esi));
+    asm volatile ("movq %%rdi, %0" : "=r"(edi));
 #else
 #   error "Unsupported architecture: only x86 / x86_64 supported"
 #endif
